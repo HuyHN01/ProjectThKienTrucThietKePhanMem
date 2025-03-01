@@ -12,6 +12,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
     <link href="~/css/materialize.css" type="text/css" rel="stylesheet" media="screen,projection" />
     <link href="~/css/style.css" type="text/css" rel="stylesheet" media="screen,projection" />
+
 </head>
 <body>
     <!-- Render Body -->
@@ -20,6 +21,17 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/js/materialize.min.js"></script>
     <script src="~/js/init.js"></script>
+
+    <script>
+        // Với JavaScript thuần
+        document.addEventListener('DOMContentLoaded', function() {
+          var elems = document.querySelectorAll('.collapsible');
+          var instances = M.Collapsible.init(elems);
+        });
+    </script>
+
     @RenderSection("Scripts", required: false)
 </body>
 </html>
+
+
