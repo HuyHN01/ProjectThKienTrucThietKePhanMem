@@ -42,7 +42,14 @@ namespace ASC.Web.Data
                 };
 
                 IdentityResult result = await userManager.CreateAsync(user, options.Value.AdminPassword);
-                await userManager.AddToRoleAsync(user, Roles.Admin.ToString());
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(user, Roles.Admin.ToString());
+                }
+                else
+                {
+                    Console.WriteLine($"Error creating admin user: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+                }
             }
 
             var engineerUser = await userManager.FindByEmailAsync(options.Value.EngineerEmail);
@@ -56,7 +63,14 @@ namespace ASC.Web.Data
                 };
 
                 IdentityResult result = await userManager.CreateAsync(engineer, options.Value.EngineerPassword);
-                await userManager.AddToRoleAsync(engineer, Roles.Engineer.ToString());
+                if (result.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(engineer, Roles.Engineer.ToString());
+                }
+                else
+                {
+                    Console.WriteLine($"Error creating engineer user: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+                }
             }
         }
     }
