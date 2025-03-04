@@ -96,6 +96,23 @@ namespace ASC.Web.Data.Migrations
                     b.ToTable("MasterDataValues");
                 });
 
+            modelBuilder.Entity("ASC.Model.Models.Product", b =>
+                {
+                    b.Property<int>("ProductId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ProductId"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("ProductId");
+
+                    b.ToTable("Products");
+                });
+
             modelBuilder.Entity("ASC.Model.Models.ServiceRequest", b =>
                 {
                     b.Property<string>("PartitionKey")
