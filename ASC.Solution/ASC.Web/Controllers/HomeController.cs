@@ -12,11 +12,11 @@ namespace ASC.Web.Controllers
         private readonly ILogger<HomeController> _logger;
 
         private IOptions<ApplicationSettings> _settings;
-        public HomeController(ILogger<HomeController> logger, IOptions<ApplicationSettings> settings)
-        {
-            _logger = logger;
-            _settings = settings;
-        }
+        //public HomeController(ILogger<HomeController> logger, IOptions<ApplicationSettings> settings)
+        //{
+        //    _logger = logger;
+        //    _settings = settings;
+        //}
         public HomeController(IOptions<ApplicationSettings> settings)
         {
             _settings = settings;
