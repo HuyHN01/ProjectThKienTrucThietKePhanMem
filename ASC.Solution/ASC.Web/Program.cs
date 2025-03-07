@@ -30,6 +30,10 @@ builder.Services.AddScoped<DbContext, ApplicationDbContext>();
 builder.Services.AddOptions();
 builder.Services.Configure<ApplicationSettings>(builder.Configuration.GetSection("AppSettings"));
 
+// Add Distributed Memory Cache and Session
+builder.Services.AddDistributedMemoryCache();  // Cấu hình bộ nhớ phân phối
+builder.Services.AddSession();
+
 builder.Services.AddRazorPages();
 
 builder.Services.AddControllersWithViews();
@@ -59,6 +63,9 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+// Enable Session middleware
+app.UseSession();
 
 app.UseAuthorization();
 
