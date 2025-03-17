@@ -1,49 +1,15 @@
-﻿using ASC.DataAccess.Interfaces;
-using ASC.DataAccess;
 using ASC.Web.Configuration;
 using ASC.Web.Data;
 using ASC.Web.Services;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-var connectionString =
-    builder.Configuration.GetConnectionString("DefaultConnection") ??
-    throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-
-builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
-
-builder.Services.AddIdentity<IdentityUser, IdentityRole>((options) =>
-{
-    options.User.RequireUniqueEmail = true;
-}).AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();
-
-builder.Services.AddScoped<DbContext, ApplicationDbContext>();
-
-
-//Tạo một đối tượng thuộc lớp ApplicationSettings lưu trữ thông tin cấu hình thực tế từ,
-//và được tiêm phụ thuộc (Dependency Injection) vào view hoặc controler sử dụng IOption.
-//Cập nhật file Program.cs
-builder.Services.AddOptions();
-builder.Services.Configure<ApplicationSettings>(builder.Configuration.GetSection("AppSettings"));
-
-// Add Distributed Memory Cache and Session
-builder.Services.AddDistributedMemoryCache();  // Cấu hình bộ nhớ phân phối
-builder.Services.AddSession();
-
-builder.Services.AddRazorPages();
-
-builder.Services.AddControllersWithViews();
-
-//Add application services
-builder.Services.AddTransient<IEmailSender, AuthMessageSender>();
-builder.Services.AddTransient<ISmsSender, AuthMessageSender>();
-builder.Services.AddSingleton<IIdentitySeed, IdentitySeed>();
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-
+builder.Services
+    .AddConfig(builder.Configuration)
+    .AddMyDependencyGroup();
 
 var app = builder.Build();
 
@@ -64,23 +30,36 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// Enable Session middleware
-app.UseSession();
-
 app.UseAuthorization();
 
+// Định tuyến cho các Area
+app.MapControllerRoute(
+    name: "areaRoute",
+    pattern: "{area:exists}/{controller=Home}/{action=Index}");
+
+// Định tuyến mặc định
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
-app.MapRazorPages();
 
+app.MapRazorPages();
+app.UseSession();
+
+// Seed user data
 using (var scope = app.Services.CreateScope())
 {
     var storageSeed = scope.ServiceProvider.GetRequiredService<IIdentitySeed>();
-        await storageSeed.Seed(
-        scope.ServiceProvider.GetService<UserManager<IdentityUser>>(),
-        scope.ServiceProvider.GetService<RoleManager<IdentityRole>>(),
-        scope.ServiceProvider.GetService<IOptions<ApplicationSettings>>());
+    await storageSeed.Seed(
+        scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>(),
+        scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>(),
+        scope.ServiceProvider.GetRequiredService<IOptions<ApplicationSettings>>());
+}
+
+//Create Navigation Cache
+using (var scope = app.Services.CreateScope())
+{
+    var navigationCacheOperations = scope.ServiceProvider.GetRequiredService<INavigationCacheOperations>();
+    await navigationCacheOperations.CreateNavigationCacheAsync();
 }
 
 app.Run();
