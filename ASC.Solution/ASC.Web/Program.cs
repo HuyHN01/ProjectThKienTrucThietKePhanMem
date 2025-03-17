@@ -2,6 +2,7 @@ using ASC.Web.Configuration;
 using ASC.Web.Data;
 using ASC.Web.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -52,6 +53,13 @@ using (var scope = app.Services.CreateScope())
         scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>(),
         scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>(),
         scope.ServiceProvider.GetRequiredService<IOptions<ApplicationSettings>>());
+}
+
+//Create Navigation Cache
+using (var scope = app.Services.CreateScope())
+{
+    var navigationCacheOperations = scope.ServiceProvider.GetRequiredService<INavigationCacheOperations>();
+    await navigationCacheOperations.CreateNavigationCacheAsync();
 }
 
 app.Run();

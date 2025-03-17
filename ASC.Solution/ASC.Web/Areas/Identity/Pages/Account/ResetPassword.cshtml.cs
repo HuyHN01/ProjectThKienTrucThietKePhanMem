@@ -81,7 +81,7 @@ namespace ASC.Web.Areas.Identity.Pages.Account
             {
                 Input = new InputModel
                 {
-                    Code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code))
+                    Code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code)) //Giải mã code token reset password được gửi đi trong liên kết email
                 };
                 return Page();
             }

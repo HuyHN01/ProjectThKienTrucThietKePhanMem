@@ -48,6 +48,10 @@ namespace ASC.Web.Services
             services.AddSession();
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
+            //Add service NavigationCacheOperations và Cache => cập nhật class DependencyInjection => phương thức AddMyDependencyGroup
+            services.AddDistributedMemoryCache();
+            services.AddSingleton<INavigationCacheOperations, NavigationCacheOperations>();
+
             // Thêm RazorPages và MVC
             services.AddRazorPages();
             services.AddDatabaseDeveloperPageExceptionFilter();
