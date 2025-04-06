@@ -28,6 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Areas\Accounts\Data\" />
     <Folder Include="Areas\ServiceRequests\Data\" />
     <Folder Include="Areas\ServiceRequests\Models\" />
   </ItemGroup>
