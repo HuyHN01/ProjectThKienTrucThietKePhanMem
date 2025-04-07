@@ -21,6 +21,15 @@ namespace ASC.Web.Services
             services.AddOptions(); // IOOption
             services.Configure<ApplicationSettings>(config.GetSection("AppSettings"));
 
+
+            //Using a gmail authentication provider for customer authentication
+            services.AddAuthentication()
+                .AddGoogle(options =>
+                {
+                    IConfigurationSection googleAuthNSection = config.GetSection("Authentication:Google");
+                    options.ClientId = config["Google:Identity:ClientId"];
+                    options.ClientSecret = config["Google:Identity:ClientSecret"];
+                });
             return services;
         }
 

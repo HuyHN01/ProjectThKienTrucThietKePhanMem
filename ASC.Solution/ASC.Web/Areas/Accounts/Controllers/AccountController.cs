@@ -120,5 +120,54 @@ namespace ASC.Web.Areas.Accounts.Controllers
 
             return RedirectToAction("ServiceEngineers");
         }
-    } 
+
+        //Lấy danh sách khách hàng
+        [HttpGet]
+        public async Task<IActionResult> Customers()
+        {
+            var customers = await _userManager.GetUsersInRoleAsync(Roles.User.ToString());
+            // Hold all customers in session
+            HttpContext.Session.SetSession("Customers", customers);
+            return View(new CustomerViewModel
+            {
+                Customers = customers == null ? null : customers.ToList(),
+                Registration = new CustomerRegistrationViewModel() { IsEdit = false }
+            });
+        }
+
+        //cập nhật trạng thái khách hàng sang active và deactive 
+        //Chú ý: không có action xử lý thêm mới khách hàng. Mà khách hàng phải đăng ký qua giao diện người dùng
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Customers(CustomerViewModel customer)
+        {
+            customer.Customers = HttpContext.Session.GetSession<List<IdentityUser>>("Customers");
+
+            if (!ModelState.IsValid)
+            {
+                return View(customer);
+            }
+
+            if (customer.Registration.IsEdit)
+            {
+                //Update User
+                //Update claims IsActive
+                var user = await _userManager.FindByEmailAsync(customer.Registration.Email);
+                var identity = await _userManager.GetClaimsAsync(user);
+                var isActiveClaim = identity.SingleOrDefault(p => p.Type == "IsActive");
+                var removeClaimResult = await _userManager.RemoveClaimAsync(user, new System.Security.Claims.Claim(isActiveClaim.Type, isActiveClaim.Value));
+                var addClaimResult = await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim(isActiveClaim.Type, customer.Registration.IsActive.ToString()));
+            }
+
+            if (customer.Registration.IsActive)
+            {
+                await _emailSender.SendEmailAsync(customer.Registration.Email,"Account Modified", $"Your account has been activated, Email: {customer.Registration.Email}");
+            }
+            else
+            {
+                await _emailSender.SendEmailAsync(customer.Registration.Email,"Account Deactivated", $"Your account has been deactivated.");
+            }
+            return RedirectToAction("Customers");
+        }
+    }
 }
