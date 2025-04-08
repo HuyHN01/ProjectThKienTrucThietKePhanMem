@@ -29,6 +29,11 @@ namespace ASC.Web.Services
                     IConfigurationSection googleAuthNSection = config.GetSection("Authentication:Google");
                     options.ClientId = config["Google:Identity:ClientId"];
                     options.ClientSecret = config["Google:Identity:ClientSecret"];
+
+                    if (string.IsNullOrEmpty(options.ClientId) || string.IsNullOrEmpty(options.ClientSecret))
+                    {
+                        throw new InvalidOperationException("Chưa cấu hình Google ClientId hoặc ClientSecret.");
+                    }
                 });
             return services;
         }
