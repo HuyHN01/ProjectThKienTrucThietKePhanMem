@@ -48,12 +48,10 @@ namespace ASC.Web.Areas.Accounts.Controllers
         public async Task<IActionResult> ServiceEngineers(ServiceEngineerViewModel serviceEngineer)
         {
             serviceEngineer.ServiceEngineers = HttpContext.Session.GetSession<List<IdentityUser>>("ServiceEngineers");
-            
             if (!ModelState.IsValid)
             {
                 return View(serviceEngineer);
             }
-
             if (serviceEngineer.Registration.IsEdit)
             {
                 // Update User
@@ -65,6 +63,7 @@ namespace ASC.Web.Areas.Accounts.Controllers
                     result.Errors.ToList().ForEach(p => ModelState.AddModelError("", p.Description));
                     return View(serviceEngineer);
                 }
+
                 // Update Password
                 var token = await _userManager.GeneratePasswordResetTokenAsync(user);
                 IdentityResult passwordResult = await _userManager.ResetPasswordAsync(user, token, serviceEngineer.Registration.Password);
@@ -73,6 +72,7 @@ namespace ASC.Web.Areas.Accounts.Controllers
                     passwordResult.Errors.ToList().ForEach(p => ModelState.AddModelError("", p.Description));
                     return View(serviceEngineer);
                 }
+
                 // Update claims
                 user = await _userManager.FindByEmailAsync(serviceEngineer.Registration.Email);
                 var identity = await _userManager.GetClaimsAsync(user);
@@ -98,7 +98,6 @@ namespace ASC.Web.Areas.Accounts.Controllers
                         p.Description));
                     return View(serviceEngineer);
                 }
-
                 // Assign user to Engineer Role
                 var roleResult = await _userManager.AddToRoleAsync(user, Roles.Engineer.ToString());
                 if (!roleResult.Succeeded)
@@ -111,13 +110,12 @@ namespace ASC.Web.Areas.Accounts.Controllers
             if (serviceEngineer.Registration.IsActive)
             {
                 await _emailSender.SendEmailAsync(serviceEngineer.Registration.Email, "Account Created/Modified",
-                    $"Email: {serviceEngineer.Registration.Email} \nPassword: {serviceEngineer.Registration.Password}");
+                    $"Email : {serviceEngineer.Registration.Email} /n Password : {serviceEngineer.Registration.Password}");
             }
             else
             {
                 await _emailSender.SendEmailAsync(serviceEngineer.Registration.Email, "Account Deactivated", $"Your account has been deactivated.");
             }
-
             return RedirectToAction("ServiceEngineers");
         }
 
@@ -126,7 +124,7 @@ namespace ASC.Web.Areas.Accounts.Controllers
         public async Task<IActionResult> Customers()
         {
             var customers = await _userManager.GetUsersInRoleAsync(Roles.User.ToString());
-            // Hold all customers in session
+            // Hold all service engineers in session
             HttpContext.Session.SetSession("Customers", customers);
             return View(new CustomerViewModel
             {
@@ -142,7 +140,6 @@ namespace ASC.Web.Areas.Accounts.Controllers
         public async Task<IActionResult> Customers(CustomerViewModel customer)
         {
             customer.Customers = HttpContext.Session.GetSession<List<IdentityUser>>("Customers");
-
             if (!ModelState.IsValid)
             {
                 return View(customer);
@@ -150,8 +147,8 @@ namespace ASC.Web.Areas.Accounts.Controllers
 
             if (customer.Registration.IsEdit)
             {
-                //Update User
-                //Update claims IsActive
+                // Update User
+                // Update claims IsActive
                 var user = await _userManager.FindByEmailAsync(customer.Registration.Email);
                 var identity = await _userManager.GetClaimsAsync(user);
                 var isActiveClaim = identity.SingleOrDefault(p => p.Type == "IsActive");
@@ -161,11 +158,11 @@ namespace ASC.Web.Areas.Accounts.Controllers
 
             if (customer.Registration.IsActive)
             {
-                await _emailSender.SendEmailAsync(customer.Registration.Email,"Account Modified", $"Your account has been activated, Email: {customer.Registration.Email}");
+                await _emailSender.SendEmailAsync(customer.Registration.Email, "Account Modified", $"Your account has been activated, Email : {customer.Registration.Email}");
             }
             else
             {
-                await _emailSender.SendEmailAsync(customer.Registration.Email,"Account Deactivated", $"Your account has been deactivated.");
+                await _emailSender.SendEmailAsync(customer.Registration.Email, "Account Deactivated", $"Your account has been deactivated.");
             }
             return RedirectToAction("Customers");
         }

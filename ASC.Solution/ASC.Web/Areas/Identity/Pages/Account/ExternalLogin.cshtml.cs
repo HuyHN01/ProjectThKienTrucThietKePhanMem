@@ -18,6 +18,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
 using ASC.Web.Services;
+using ASC.Model.BaseTypes;
 
 namespace ASC.Web.Areas.Identity.Pages.Account
 {
@@ -26,20 +27,17 @@ namespace ASC.Web.Areas.Identity.Pages.Account
     {
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly UserManager<IdentityUser> _userManager;
-        private readonly Services.IEmailSender _emailSender;
         private readonly ILogger<ExternalLoginModel> _logger;
 
         public ExternalLoginModel(
             SignInManager<IdentityUser> signInManager,
             UserManager<IdentityUser> userManager,
-            ILogger<ExternalLoginModel> logger,
-            Services.IEmailSender emailSender
+            ILogger<ExternalLoginModel> logger
             )
         {
             _signInManager = signInManager;
             _userManager = userManager;
             _logger = logger;
-            _emailSender = emailSender;
         }
 
         [BindProperty]
@@ -54,17 +52,14 @@ namespace ASC.Web.Areas.Identity.Pages.Account
             [Required]
             [EmailAddress]
             public string Email { get; set; }
-        }   
-
-        public IActionResult OnGetAsync()
-        {
-            return RedirectToPage("./Login");
         }
 
-        public IActionResult OnPost(string provider, string returlUrl = null)
+        public IActionResult OnGet() => RedirectToPage("./Login");
+
+        public IActionResult OnPost(string provider, string returnUrl = null)
         {
-            //Request a redirect to the external login provider
-            var redirectUrl = Url.Page("./ExternalLogin", pageHandler: "Callback", values: new { returlUrl });
+            // Request a redirect to the external login provider.
+            var redirectUrl = Url.Page("./ExternalLogin", pageHandler: "Callback", values: new { returnUrl });
             var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
             return new ChallengeResult(provider, properties);
         }
@@ -88,17 +83,8 @@ namespace ASC.Web.Areas.Identity.Pages.Account
             var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false, bypassTwoFactor: true);
             if (result.Succeeded)
             {
-                var user = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
-                var list = await _userManager.GetClaimsAsync(user);
-                var isActive = Boolean.Parse(list.SingleOrDefault(p => p.Type == "IsActive").Value);
-
-                if (!isActive)
-                {
-                    ModelState.AddModelError(string.Empty, "Account has been locked.");
-                    return Page();
-                }
                 _logger.LogInformation("{Name} logged in with {LoginProvider} provider.", info.Principal.Identity.Name, info.LoginProvider);
-                return RedirectToAction("Dashboard", "Dashboard", new { Area = "ServiceRequests" });
+                return RedirectToAction("Dashboard", "Dashboard", new { area = "ServiceRequests" });
             }
             if (result.IsLockedOut)
             {
@@ -109,69 +95,62 @@ namespace ASC.Web.Areas.Identity.Pages.Account
                 // If the user does not have an account, then ask the user to create an account.
                 ReturnUrl = returnUrl;
                 ProviderDisplayName = info.ProviderDisplayName;
-                var email = info.Principal.FindFirstValue(ClaimTypes.Email);
-                return RedirectToPage("./ExternalLoginConfirmation", new ExternalLoginConfirmationModel.InputModel { Email = email });
+                if (info.Principal.HasClaim(c => c.Type == ClaimTypes.Email))
+                {
+                    Input = new InputModel
+                    {
+                        Email = info.Principal.FindFirstValue(ClaimTypes.Email)
+                    };
+                }
+                return Page();
             }
-
         }
 
-        public async Task<IActionResult> OnPostConfirmationAsync(string returlUrl = null)
+        public async Task<IActionResult> OnPostConfirmationAsync(string returnUrl = null)
         {
-            returlUrl = returlUrl ?? Url.Content("~/");
-
-            //Get the information about the user from the external login provider
-            var info = await _signInManager.GetExternalLoginInfoAsync();
-            if (info == null)
-            {
-                ErrorMessage = "Erro loading external login information during confirmation.";
-                return RedirectToPage("./Login", new { ReturnUrl = returlUrl });
-            }
-            
             if (ModelState.IsValid)
             {
-                var user = new IdentityUser { UserName = Input.Email, Email = Input.Email };
-
+                // Get the information about the user from the external login provider
+                var info = await _signInManager.GetExternalLoginInfoAsync();
+                if (info == null)
+                {
+                    return RedirectToPage("./ExternalLoginFailure");
+                }
+                var user = new IdentityUser
+                {
+                    UserName = Input.Email,
+                    Email = Input.Email,
+                    EmailConfirmed = true
+                };
                 var result = await _userManager.CreateAsync(user);
+                await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress", user.Email));
+                await _userManager.AddClaimAsync(user, new System.Security.Claims.Claim("IsActive", "True"));
+                if (!result.Succeeded)
+                {
+                    result.Errors.ToList().ForEach(p => ModelState.AddModelError("", p.Description));
+                    return Page();
+                }
+                // Assign user to User Role
+                var roleResult = await _userManager.AddToRoleAsync(user, Roles.User.ToString());
+                if (!roleResult.Succeeded)
+                {
+                    roleResult.Errors.ToList().ForEach(p => ModelState.AddModelError("", p.Description));
+                    return Page();
+                }
+
                 if (result.Succeeded)
                 {
                     result = await _userManager.AddLoginAsync(user, info);
                     if (result.Succeeded)
                     {
-                        _logger.LogInformation("User created an account using {Name} provider", info.LoginProvider);
-
-                        var userId = await _userManager.GetUserIdAsync(user);
-                        var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                        code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-                        var callbackUrl = Url.Page(
-                            "/Account/ConfirmEmail",
-                            pageHandler: null,
-                            values: new { area = "Identity", userId = userId, code = code},
-                            protocol: Request.Scheme);
-
-                        await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
-                            $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'> clicking her </a>."
-                            );
-
-                        //If account confirmation is required, we need to show the link if we don't have a real email sender
-                        if (_userManager.Options.SignIn.RequireConfirmedAccount)
-                        {
-                            return RedirectToPage("./RegisterConfirmation", new { email = Input.Email });
-                        }
-                        
-                        await _signInManager.SignInAsync(user, isPersistent: false, info.LoginProvider);
-                        
-                        return LocalRedirect(returlUrl);
+                        await _signInManager.SignInAsync(user, isPersistent: false);
+                        _logger.LogInformation(6, "User created an account using {Name} provider.", info.LoginProvider);
+                        return RedirectToAction("Dashboard", "Dashboard", new { area = "ServiceRequests" });
                     }
                 }
-
-                foreach(var error in result.Errors)
-                {
-                    ModelState.AddModelError(string.Empty, error.Description);
-                }
+                ModelState.AddModelError(string.Empty, result.ToString());
             }
-
-            ProviderDisplayName = info.ProviderDisplayName;
-            ReturnUrl = returlUrl;
+            ViewData["ReturnUrl"] = returnUrl;
             return Page();
         }
     }

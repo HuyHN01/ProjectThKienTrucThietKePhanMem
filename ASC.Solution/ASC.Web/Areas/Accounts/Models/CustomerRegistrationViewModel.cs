@@ -1,16 +1,16 @@
-﻿//Lưu trữ thông tin khác hàng đăng ký
-
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace ASC.Web.Areas.Accounts.Models
 {
+    // 1 reference
     public class CustomerRegistrationViewModel
     {
         [Required]
         [EmailAddress]
         [Display(Name = "Email")]
         public string Email { get; set; }
-        public string UserName { get; set; }
+
+        public string? UserName { get; set; }
         public bool IsEdit { get; set; }
         public bool IsActive { get; set; }
     }

@@ -41,7 +41,7 @@
                                     @user.Email
                                 </td>
                                 <td>
-                                    @(Boolean.Parse(identity.SingleOrDefault(p => p.Type == "IsActive").Value));
+                                    @(Boolean.Parse(identity.SingleOrDefault(p => p.Type == "IsActive").Value))
                                 </td>
                                 <td>
                                     <img src="@(Boolean.Parse(identity.SingleOrDefault(p => p.Type == "IsActive").Value) ? "/images/green_tick.png" : "/images/red_cross.png")" />
