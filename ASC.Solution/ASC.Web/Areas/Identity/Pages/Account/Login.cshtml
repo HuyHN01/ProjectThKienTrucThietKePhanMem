@@ -44,5 +44,32 @@
                 </div>
             </form>
         </div>
+        <!--Hiển thị nút đăng nhập bằng google-->
+        <div class="col s12 m4 offset-m1">
+            <h6>Login using External Provider</h6>
+
+            <div class="divider"></div>
+
+            @{
+                var loginProviders = await SignInManager.GetExternalAuthenticationSchemesAsync();
+
+                if (loginProviders.Count() != 0)
+                {
+                    <form asp-area="Identity" asp-page="/Account/ExternalLogin" asp-route-returnurl="@ViewData["ReturnUrl"]" method="post" class="formhorizontal">
+                        <div>
+                            <p>
+                                @foreach (var provider in loginProviders)
+                                {
+                                    <button type="submit" class="btn btndefault" name="provider" value="@provider.DisplayName" title="Log in using your@provider.DisplayName account">
+                                        @provider.DisplayName
+                                    </button>
+                                }
+                            </p>
+                        </div>                    
+                    </form>
+                }
+            }
+        </div>
+
     </div>
 </div>

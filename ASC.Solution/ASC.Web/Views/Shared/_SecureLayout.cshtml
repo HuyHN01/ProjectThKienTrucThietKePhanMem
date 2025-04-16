@@ -99,7 +99,7 @@
 </form>
 
 @section Scripts {
-    @RenderSection("Scripts", required: false)
+    
     <script type="text/javascript">
         $(function () {
             $('#ancrLogout').click(function () {
@@ -115,6 +115,6 @@
             $('.collapsible').collapsible();
         });
     </script>
-}
 
-@RenderSection("Scripts", required: false)
+    @RenderSection("Scripts", required: false)
+}
