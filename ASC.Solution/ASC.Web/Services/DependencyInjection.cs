@@ -4,6 +4,7 @@ using ASC.Web.Configuration;
 using ASC.Web.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using ASC.Business.Interfaces;
 
 namespace ASC.Web.Services
 {
@@ -71,6 +72,9 @@ namespace ASC.Web.Services
             services.AddDatabaseDeveloperPageExceptionFilter();
             services.AddControllersWithViews();
 
+            //Lab số 6: Bước 4
+            services.AddScoped<IMasterDataOperations, IMasterDataOperations>();
+            services.AddAutoMapper(typeof(ApplicationDbContext));
 
             return services;
         }
