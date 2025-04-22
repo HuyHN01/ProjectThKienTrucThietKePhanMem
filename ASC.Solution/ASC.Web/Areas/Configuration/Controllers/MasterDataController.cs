@@ -56,6 +56,7 @@ namespace ASC.Web.Areas.Configuration.Controllers
                 // Insert Master Key
                 masterKey.RowKey = Guid.NewGuid().ToString();
                 masterKey.PartitionKey = masterKey.Name;
+                masterKey.CreatedBy = HttpContext.User.GetCurrentUserDetails().Name;
                 await _masterData.InsertMasterKeyAsync(masterKey);
             }
             return RedirectToAction("MasterKeys");

@@ -5,6 +5,7 @@ using ASC.Web.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using ASC.Business.Interfaces;
+using ASC.Web.Areas.Configuration.Models;
 
 namespace ASC.Web.Services
 {
@@ -73,7 +74,7 @@ namespace ASC.Web.Services
             services.AddControllersWithViews();
 
             //Lab số 6: Bước 4
-            services.AddScoped<IMasterDataOperations, IMasterDataOperations>();
+            services.AddScoped<IMasterDataOperations, ASC.Business.MasterDataOperations>();
             services.AddAutoMapper(typeof(ApplicationDbContext));
 
             return services;

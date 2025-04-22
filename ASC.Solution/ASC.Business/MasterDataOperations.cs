@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace ASC.Business
 {
-    internal class MasterDataOperations : IMasterDataOperations
+    public class MasterDataOperations : IMasterDataOperations
     {
         private readonly IUnitOfWork _unitOfWork;
 
