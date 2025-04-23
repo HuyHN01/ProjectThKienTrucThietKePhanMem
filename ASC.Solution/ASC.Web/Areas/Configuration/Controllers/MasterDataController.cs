@@ -61,5 +61,49 @@ namespace ASC.Web.Areas.Configuration.Controllers
             }
             return RedirectToAction("MasterKeys");
         }
+
+        [HttpGet]
+        public async Task<IActionResult> MasterValues()
+        {
+            //Get all Master Keys and hold in ViewBag for Select tag
+            ViewBag.MasterKeys = await _masterData.GetAllMasterKeysAsync();
+            return View(new MasterValuesViewModel
+            {
+                MasterValues = new List<MasterDataValueViewModel>(),
+                IsEdit = false
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> MasterValuesByKey(string key)
+        {
+            //Get Master values based on master key.
+            return Json(new {data = await _masterData.GetAllMasterValuesByKeyAsync(key)});
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MasterValues(bool isEdit, MasterDataValueViewModel masterValue)
+        {
+            if (!ModelState.IsValid)
+            {
+                return Json("Error");
+            }
+
+            var masterDataValue = _mapper.Map<MasterDataValueViewModel, MasterDataValue>(masterValue);
+            if (isEdit)
+            {
+                //Update Master Value
+                await _masterData.UpdateMasterValueAsync(masterDataValue.PartitionKey, masterDataValue.RowKey, masterDataValue);
+            }
+            else 
+            {
+                //Insert Master Value
+                masterDataValue.RowKey = Guid.NewGuid().ToString();
+                await _masterData.InsertMasterValueAsync(masterDataValue);
+            }
+
+            return Json(true);
+        }
     }
 }
