@@ -76,6 +76,9 @@ namespace ASC.Web.Services
             //Lab số 6: Bước 4
             services.AddScoped<IMasterDataOperations, ASC.Business.MasterDataOperations>();
             services.AddAutoMapper(typeof(ApplicationDbContext));
+            services.AddControllersWithViews().AddJsonOptions(options => {
+                options.JsonSerializerOptions.PropertyNamingPolicy = null;
+            });
 
             return services;
         }

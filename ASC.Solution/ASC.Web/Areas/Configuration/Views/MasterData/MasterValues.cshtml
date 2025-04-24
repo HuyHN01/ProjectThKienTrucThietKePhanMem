@@ -18,7 +18,7 @@
         </div>
         <div class="col s4 offset-s4 padding-bottom-15px right-align">
             <a class="modal-trigger waves-effect waves-light" href="#modal1">
-                <img src="~/images/excel.png"/>
+                <img src="~/images/excel.png" />
             </a>
         </div>
         <div class="col s12 padding-bottom-15px">
@@ -50,7 +50,7 @@
                     <input type="hidden" asp-for="MasterValueInContext.RowKey" />
                     <input type="hidden" asp-for="MasterValueInContext.PartitionKey" />
                     <div class="input-field col s4">
-                        <input asp-for="MasterValueInContext.RowKey" id="Input_MasterKey_RowKey" disabled="disabled"/>
+                        <input asp-for="MasterValueInContext.RowKey" id="Input_MasterKey_RowKey" disabled="disabled" />
                         <label asp-for="MasterValueInContext.RowKey"></label>
                     </div>
                     <div class="input-field col s4">
@@ -60,7 +60,7 @@
                         <label>Partition Key</label>
                     </div>
                     <div class="input-field col s4">
-                        <input asp-for="MasterValueInContext.Name" class="validate"/>
+                        <input asp-for="MasterValueInContext.Name" class="validate" />
                         <label asp-for="MasterValueInContext.Name"></label>
                     </div>
                 </div>
@@ -69,7 +69,7 @@
                         <div class="switch">
                             <label>
                                 Is Active
-                                <input asp-for="MasterValueInContext.IsActive" class="validate"/>
+                                <input asp-for="MasterValueInContext.IsActive" class="validate" />
                                 <span class="lever"></span>
                             </label>
                         </div>
@@ -111,10 +111,10 @@
             <div class="file-field input-field">
                 <div class="btn">
                     <span>File</span>
-                    <input type="file" id="files"/>
+                    <input type="file" id="files" />
                 </div>
                 <div class="file-path-wrapper">
-                    <input class="file-path validate" type="text"/>
+                    <input class="file-path validate" type="text" />
                 </div>
                 <div class="input-field row right">
                     <button class="btn waves-effect waves-light btnUpload" type="button" name="action">
@@ -127,3 +127,184 @@
     </div>
 </div>
 
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            //Need to pass Verification Token to get Request Validated for Forgery
+            var token = $('input[type = hidden][name = __RequestVerificationToken]', document).val();
+            $.ajaxSetup({
+                //Disable caching of AJAX responses
+                cache: false,
+                headers: {'RequestVerificationToken': token}
+            });
+            //Initialize DataTable to show list of Master Values
+            var table = $('#tblMasterValues').DataTable({
+                //Make AJAX call based to get Master Values from Server
+                'ajax': {
+                    'url': '@Url.Action("MasterValuesByKey", "MasterData")',
+                    'type': 'GET',
+                },
+                'pageLength': 3,
+                //Number of records to be displayed per page
+                'lengthMenu': [[3, 5, 10, -1], [3, 5, 10, 'All']],
+                //Set Columns
+                'columns': [
+                    {'data' : 'RowKey' },
+                    {'data' : 'PartitionKey' },
+                    {'data' : 'Name' },
+                    {'data' : 'IsActive' },
+                    {'data' : 'Actions' },
+                ],
+                //Set Custom Column definitions and define their render HTML.
+                "aoColumnDefs": [
+                    {
+                        "aTargets": [3],
+                        "mData": "IsActive",
+                        "mRender": function (data, type, full) {
+                            console.log("IsActive: " + data)
+                            if (data === true)
+                            {
+                                return '<img src = "/images/green_tick.png" />';
+                            }
+                            else
+                            {
+                                return '<img src = "/images/red_cross.png" />';
+                            }
+                        }
+                    },
+                    {
+                        "aTargets": [4],
+                        "mData": "Actions",
+                        "mRender": function (data, type, full) {
+                            return '<i class = "small material-icons edit cursor-hand">mode_edit</i>';
+                        }
+                    }
+                ]
+            });
+            //Set Styles for DataTable and Number of Records to be displayed in drop-down
+            $('#tblMasterValues').css("Width", "100%");
+            $('select[name="tblMasterValues_length"]').formSelect();
+            $("select[required]").css({
+                display: "block", position: 'absolute', visibility: 'hidden'
+            });
+            //Initialize Master Key select
+            $(document).ready(function () {
+                $('select').formSelect();
+            });
+
+            // Handle Reset functionality
+            $(document).on("click", ".reset", function () {
+                $('#formMasterValue')[0].reset();
+                $('.btnSubmit').text('Create');
+                $('#IsEdit').val('False');
+                // Remove Partition key disabled attribute
+                $('#Select_MasterValueInContext_PartitionKey').formSelect('destroy');
+                $('#Select_MasterValueInContext_PartitionKey').removeAttr('disabled');
+                //$('#Select_MasterValueInContext_PartitionKey').material_select();
+                $('#Select_MasterValueInContext_PartitionKey').formSelect();
+
+                // Remove the validation error messages.
+                $('.validation-summary-valid').find("ul").html('');
+            });
+
+            // On Click of Edit icon, populate the details section with details of service engineer
+            $(document).on("click", '.edit', function () {
+                console.log("Test");
+                var user = $('#tblMasterValues').DataTable().row($(this).parents('tr')).data();
+                console.log(user);
+                $('#isEdit').val('True');
+                // Map Row Key
+                $('#MasterValueInContext_RowKey').val(user["RowKey"]);
+                $('#Input_MasterKey_RowKey').val(user["RowKey"]);
+                // Map Partition Key
+                $('#MasterValueInContext_PartitionKey').val(user["PartitionKey"]);
+                // Set Partition Key Dropdown and re-initialize Material Select
+                $('#Select_MasterValueInContext_PartitionKey').formSelect('destroy');
+                $('#Select_MasterValueInContext_PartitionKey option:contains(' + user['PartitionKey'] + ')').prop('selected', true);
+                $('#Select_MasterValueInContext_PartitionKey').attr('disabled', 'disabled');
+                $('#Select_MasterValueInContext_PartitionKey').formSelect();
+                // Remove valid class for dropdownlist, as it is disabled
+                $('.select-wrapper').removeClass('valid');
+                // Map Name
+                $('#MasterValueInContext_Name').val(user["Name"]);
+                $('#MasterValueInContext_Name').addClass('valid');
+                // Map IsActive
+                $('#MasterValueInContext_IsActive').prop('checked', user["IsActive"] === true ? true : false);
+                $('.btnSubmit').text('Save');
+                M.updateTextFields();
+            });
+            // Dropdown change event
+            $(document).on('change', '#ddlMasterKeys', function () {
+                table.ajax.url("@Url.Action("MasterValuesByKey", "MasterData")" + "?key=" + $('#ddlMasterKeys option:selected').text());
+                table.ajax.reload();
+            });
+
+            //Save/Create Button Click Event
+            $(document).on('click', '.btnSubmit', function () {
+                var form = $("#formMasterValue");
+                if ($(form).valid())
+                {
+                    //Create the POST Object
+                    var masterData = new Object();
+                    masterData.Name = $('#MasterValueInContext_Name').val();
+                    masterData.PartitionKey = $('#Select_MasterValueInContext_PartitionKey option:selected').text();
+                    masterData.IsActive = $('#MasterValueInContext_IsActive').is(":checked");
+                    if ($('#IsEdit').val())
+                    {
+                        masterData.RowKey = $('#MasterValueInContext_RowKey').val();
+                    }
+                    //POST the data to server
+                        $.post('@Url.Action("MasterValues", "MasterData")',
+                            {
+                                masterValue: masterData, isEdit: $('#IsEdit').val()
+                            },
+                            function (data, status, xhr){
+                                table.ajax.url('@Url.Action("MasterValuesByKey", "MasterData")' + "?key = " + $('#ddlMasterKeys option:selected').text());
+                                table.ajax.reload();
+                            }
+                        );
+                        //Reset the form
+                        $('.reset').click();
+                        //Remove valid class for materialize dropdown, otherwise there is a CSS distortion
+                        $('.select-wrapper').removeClass('valid');
+                }
+            });
+        });
+
+        $('.modal').modal();
+        $(document).on('click', '.btnUpload', function () {
+            //Get all file from input file tag
+            var fileUpload = $('#files').get(0);
+            var files = fileUpload.files;
+            var data = new FormData();
+            //Process the file and create FormData object
+            $.each(files, function (i) {
+                data.append(files[i].name, files[i]);
+            });
+            //Show progress bar
+            $(".progress").removeClass("hide");
+            $.ajax({
+                type: "POST",
+                url: "/Configuration/MasterData/UploadExcel",
+                contentType: false,
+                processData: false,
+                data: data,
+                success: function (message) {
+                    //Hide progress bar
+                    $(".progress").addClass("hide");
+                    if (message.Success) {
+                        //Reload the page on success
+                        window.location.reload();
+                    }
+                    if (message.Error) {
+                        //Show errors
+                        $(".divErrors").removeClass("hide");
+                        $(".errors").html("");
+                        $(".errors").html(message.Text);
+                    }
+                },
+                error: function() {}
+            });
+        });
+    </script>
+}
