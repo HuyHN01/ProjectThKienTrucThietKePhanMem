@@ -4,8 +4,11 @@ using ASC.Web.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.Extensions.Options;
+using OfficeOpenXml;
 
 var builder = WebApplication.CreateBuilder(args);
+
+ExcelPackage.License.SetNonCommercialPersonal("Automobile Service Center Application");
 
 builder.Services
     .AddConfig(builder.Configuration)
