@@ -116,5 +116,10 @@
         });
     </script>
 
-    @RenderSection("Scripts", required: false)
+    <!-- Quan trọng: Render section "Scripts" từ view con (Dashboard.cshtml) -->
+    @if (IsSectionDefined("Scripts"))
+    {
+        @RenderSection("Scripts", required: false)
+    }
+   
 }
